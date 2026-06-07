@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AND, XOR, NOT, OR, and Full Adder Demo</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --card: #1f2937;
+      --card2: #0b1220;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --accent: #60a5fa;
+      --good: #34d399;
+      --warn: #fbbf24;
+      --border: #334155;
+      --chip: #1e293b;
+      --on: #22c55e;
+      --off: #ef4444;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: linear-gradient(180deg, #0b1020, var(--bg));
+      color: var(--text);
+      line-height: 1.45;
+    }
+
+    .wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    h1, h2, h3 { margin: 0 0 12px; }
+    h1 { font-size: 2rem; }
+    h2 { font-size: 1.3rem; margin-top: 12px; }
+    h3 { font-size: 1.05rem; color: #f8fafc; }
+    p { margin: 0 0 12px; color: var(--text); }
+    .muted { color: var(--muted); }
+
+    .hero {
+      background: rgba(17, 24, 39, 0.9);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      margin-bottom: 18px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .card {
+      background: rgba(31, 41, 55, 0.9);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: 0 8px 22px rgba(0,0,0,0.2);
+    }
+
+    .formula {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      overflow-x: auto;
+      margin: 10px 0;
+      white-space: pre-wrap;
+    }
+
+    .gate-line {
+      display: grid;
+      grid-template-columns: 90px 1fr;
+      gap: 12px;
+      align-items: center;
+      margin: 12px 0;
+    }
+
+    .gate {
+      width: 90px;
+      min-height: 52px;
+      border-radius: 14px;
+      border: 1px solid #4b5563;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(180deg, #223046, #111827);
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .wire {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      font-size: 0.95rem;
+    }
+
+    .bit {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: #0b1220;
+      font-weight: 700;
+    }
+
+    .bit.on { background: rgba(34,197,94,0.2); color: #86efac; border-color: rgba(34,197,94,0.55); }
+    .bit.off { background: rgba(239,68,68,0.16); color: #fca5a5; border-color: rgba(239,68,68,0.45); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      overflow: hidden;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(11, 18, 32, 0.72);
+    }
+    th, td {
+      border-bottom: 1px solid var(--border);
+      padding: 10px 8px;
+      text-align: center;
+      font-size: 0.95rem;
+    }
+    th {
+      background: rgba(96,165,250,0.12);
+      color: #dbeafe;
+      font-weight: 700;
+    }
+    tr:last-child td { border-bottom: none; }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+      align-items: center;
+    }
+
+    .toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      user-select: none;
+      background: #0b1220;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+    .toggle input { accent-color: var(--accent); }
+
+    .pill {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      background: rgba(96,165,250,0.14);
+      border: 1px solid rgba(96,165,250,0.35);
+      color: #bfdbfe;
+      margin-left: 6px;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 16px;
+    }
+    @media (max-width: 900px) {
+      .two-col { grid-template-columns: 1fr; }
+    }
+
+    .result {
+      font-size: 1.2rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+    }
+
+    .bigbits {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 12px 0;
+    }
+
+    .step {
+      border-left: 3px solid var(--accent);
+      padding-left: 12px;
+      margin: 12px 0;
+    }
+
+    .small {
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <h1>AND + XOR → NOT, OR, and a Full Adder</h1>
+      <p class="muted">Click the bits below and watch what each gate does. The goal is to see how a full adder is just smaller pieces connected together.</p>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>1) What a gate does</h2>
+        <p>A gate takes bits in and gives a bit out.</p>
+        <div class="gate-line">
+          <div class="gate">AND</div>
+          <div class="wire">Only turns on when <span class="bit on">1</span> and <span class="bit on">1</span> are both present.</div>
+        </div>
+        <div class="gate-line">
+          <div class="gate">XOR</div>
+          <div class="wire">Turns on when the inputs are different: <span class="bit on">0</span>/<span class="bit off">1</span> or <span class="bit on">1</span>/<span class="bit off">0</span>.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>2) Truth tables</h2>
+        <table>
+          <thead>
+            <tr><th>A</th><th>B</th><th>A AND B</th><th>A XOR B</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+            <tr><td>0</td><td>1</td><td>0</td><td>1</td></tr>
+            <tr><td>1</td><td>0</td><td>0</td><td>1</td></tr>
+            <tr><td>1</td><td>1</td><td>1</td><td>0</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>3) NOT from XOR</h2>
+        <p>If you have a constant <strong>1</strong>, XOR flips the bit.</p>
+        <div class="controls">
+          <label class="toggle"><input id="notInput" type="checkbox"> Input A</label>
+          <span class="pill">0 = off, 1 = on</span>
+        </div>
+        <div class="formula">NOT A = A XOR 1</div>
+        <div class="step">
+          <div>Input A: <span id="notA" class="bit off">0</span></div>
+          <div>Constant 1: <span class="bit on">1</span></div>
+          <div>Output: <span id="notOut" class="bit on">1</span></div>
+        </div>
+        <p class="small">When A = 0, XOR with 1 gives 1. When A = 1, XOR with 1 gives 0.</p>
+      </div>
+
+      <div class="card">
+        <h2>4) OR from AND + XOR</h2>
+        <p>There is a neat trick:</p>
+        <div class="formula">A OR B = (A XOR B) XOR (A AND B)</div>
+        <div class="controls">
+          <label class="toggle"><input id="orA" type="checkbox"> A</label>
+          <label class="toggle"><input id="orB" type="checkbox"> B</label>
+        </div>
+        <div class="step">
+          <div>A: <span id="orAview" class="bit off">0</span></div>
+          <div>B: <span id="orBview" class="bit off">0</span></div>
+          <div>A XOR B: <span id="orXor" class="bit off">0</span></div>
+          <div>A AND B: <span id="orAnd" class="bit off">0</span></div>
+          <div>Output OR: <span id="orOut" class="bit off">0</span></div>
+        </div>
+        <p class="small">This works because XOR gives the "one is on" cases, and AND adds the "both are on" case.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>5) Half adder</h2>
+      <p>A half adder adds two bits.</p>
+      <div class="formula">Sum = A XOR B
+Carry = A AND B</div>
+      <div class="controls">
+        <label class="toggle"><input id="haA" type="checkbox"> A</label>
+        <label class="toggle"><input id="haB" type="checkbox"> B</label>
+      </div>
+      <div class="bigbits">
+        <div>A: <span id="haAview" class="bit off">0</span></div>
+        <div>B: <span id="haBview" class="bit off">0</span></div>
+        <div>Sum: <span id="haSum" class="bit off">0</span></div>
+        <div>Carry: <span id="haCarry" class="bit off">0</span></div>
+      </div>
+      <table>
+        <thead><tr><th>A</th><th>B</th><th>Sum</th><th>Carry</th></tr></thead>
+        <tbody>
+          <tr><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+          <tr><td>0</td><td>1</td><td>1</td><td>0</td></tr>
+          <tr><td>1</td><td>0</td><td>1</td><td>0</td></tr>
+          <tr><td>1</td><td>1</td><td>0</td><td>1</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <h2>6) Full adder</h2>
+        <p>A full adder adds <strong>three</strong> bits: A, B, and Carry-In.</p>
+        <div class="formula">X1 = A XOR B
+C1 = A AND B
+Sum = X1 XOR Cin
+C2 = X1 AND Cin
+CarryOut = C1 OR C2</div>
+        <p class="small">First add A and B. Then add the carry-in. Finally, combine the two possible carries.</p>
+        <div class="controls">
+          <label class="toggle"><input id="faA" type="checkbox"> A</label>
+          <label class="toggle"><input id="faB" type="checkbox"> B</label>
+          <label class="toggle"><input id="faCin" type="checkbox"> Carry In</label>
+        </div>
+        <div class="bigbits">
+          <div>A: <span id="faAview" class="bit off">0</span></div>
+          <div>B: <span id="faBview" class="bit off">0</span></div>
+          <div>Cin: <span id="faCinview" class="bit off">0</span></div>
+        </div>
+        <div class="step">
+          <div>X1 = A XOR B → <span id="faX1" class="bit off">0</span></div>
+          <div>C1 = A AND B → <span id="faC1" class="bit off">0</span></div>
+          <div>Sum = X1 XOR Cin → <span id="faSum" class="bit off">0</span></div>
+          <div>C2 = X1 AND Cin → <span id="faC2" class="bit off">0</span></div>
+          <div>CarryOut = C1 OR C2 → <span id="faCarry" class="bit off">0</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>7) Why the full adder works</h2>
+        <p>Adding three 1-bit inputs can make 0, 1, 2, or 3.</p>
+        <table>
+          <thead>
+            <tr><th>A</th><th>B</th><th>Cin</th><th>Decimal total</th><th>Binary result</th><th>Sum</th><th>Carry</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>0</td><td>0</td><td>0</td><td>0</td><td>00</td><td>0</td><td>0</td></tr>
+            <tr><td>0</td><td>0</td><td>1</td><td>1</td><td>01</td><td>1</td><td>0</td></tr>
+            <tr><td>0</td><td>1</td><td>0</td><td>1</td><td>01</td><td>1</td><td>0</td></tr>
+            <tr><td>0</td><td>1</td><td>1</td><td>2</td><td>10</td><td>0</td><td>1</td></tr>
+            <tr><td>1</td><td>0</td><td>0</td><td>1</td><td>01</td><td>1</td><td>0</td></tr>
+            <tr><td>1</td><td>0</td><td>1</td><td>2</td><td>10</td><td>0</td><td>1</td></tr>
+            <tr><td>1</td><td>1</td><td>0</td><td>2</td><td>10</td><td>0</td><td>1</td></tr>
+            <tr><td>1</td><td>1</td><td>1</td><td>3</td><td>11</td><td>1</td><td>1</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>8) Big picture</h2>
+      <p>The same idea repeats many times:</p>
+      <div class="formula">Half adder + carry handling → Full adder
+Full adder + full adder + full adder → 4-bit adder
+4-bit adder + more stages → 8-bit, 16-bit, 32-bit, 64-bit adders</div>
+      <p class="muted">Once you understand this page, you understand the basic logic behind arithmetic inside a CPU.</p>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const onClass = (el, bit) => {
+      el.textContent = bit ? '1' : '0';
+      el.classList.toggle('on', !!bit);
+      el.classList.toggle('off', !bit);
+    };
+
+    function xor(a, b) { return (a && !b) || (!a && b) ? 1 : 0; }
+    function and(a, b) { return (a && b) ? 1 : 0; }
+    function orFromXorAnd(a, b) { return xor(xor(a, b), and(a, b)); }
+
+    function updateNot() {
+      const a = $('notInput').checked ? 1 : 0;
+      const out = xor(a, 1);
+      onClass($('notA'), a);
+      onClass($('notOut'), out);
+    }
+
+    function updateOr() {
+      const a = $('orA').checked ? 1 : 0;
+      const b = $('orB').checked ? 1 : 0;
+      onClass($('orAview'), a);
+      onClass($('orBview'), b);
+      const x = xor(a, b);
+      const c = and(a, b);
+      const out = orFromXorAnd(a, b);
+      onClass($('orXor'), x);
+      onClass($('orAnd'), c);
+      onClass($('orOut'), out);
+    }
+
+    function updateHalfAdder() {
+      const a = $('haA').checked ? 1 : 0;
+      const b = $('haB').checked ? 1 : 0;
+      const sum = xor(a, b);
+      const carry = and(a, b);
+      onClass($('haAview'), a);
+      onClass($('haBview'), b);
+      onClass($('haSum'), sum);
+      onClass($('haCarry'), carry);
+    }
+
+    function updateFullAdder() {
+      const a = $('faA').checked ? 1 : 0;
+      const b = $('faB').checked ? 1 : 0;
+      const cin = $('faCin').checked ? 1 : 0;
+      const x1 = xor(a, b);
+      const c1 = and(a, b);
+      const sum = xor(x1, cin);
+      const c2 = and(x1, cin);
+      const carry = orFromXorAnd(c1, c2);
+
+      onClass($('faAview'), a);
+      onClass($('faBview'), b);
+      onClass($('faCinview'), cin);
+      onClass($('faX1'), x1);
+      onClass($('faC1'), c1);
+      onClass($('faSum'), sum);
+      onClass($('faC2'), c2);
+      onClass($('faCarry'), carry);
+    }
+
+    $('notInput').addEventListener('change', updateNot);
+    $('orA').addEventListener('change', updateOr);
+    $('orB').addEventListener('change', updateOr);
+    $('haA').addEventListener('change', updateHalfAdder);
+    $('haB').addEventListener('change', updateHalfAdder);
+    $('faA').addEventListener('change', updateFullAdder);
+    $('faB').addEventListener('change', updateFullAdder);
+    $('faCin').addEventListener('change', updateFullAdder);
+
+    updateNot();
+    updateOr();
+    updateHalfAdder();
+    updateFullAdder();
+  </script>
+</body>
+</html>
