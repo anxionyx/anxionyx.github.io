@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Full Adder Demo</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --border-color: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-blue: #38bdf8;
+            --accent-green: #4ade80;
+            --gate-bg: #1e1b4b;
+            --gate-border: #4338ca;
+            --wire-off: #475569;
+            --wire-on: #f59e0b;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+        }
+
+        header {
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 16px;
+        }
+
+        h1 {
+            margin: 0 0 8px 0;
+            font-size: 1.8rem;
+            color: var(--accent-blue);
+        }
+
+        p {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        /* Interactive Demo Grid */
+        .workspace {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+
+        @media (min-width: 768px) {
+            .workspace {
+                grid-template-columns: 3fr 2fr;
+            }
+        }
+
+        /* Interactive Schematic Canvas Area */
+        .interactive-panel {
+            background: #0b0f19;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .inputs-row {
+            display: flex;
+            justify-content: space-around;
+            background: #1e293b;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border: 1px solid #334155;
+        }
+
+        .input-bit {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-bit label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--accent-blue);
+        }
+
+        /* Toggle Switch Styling */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: var(--wire-off);
+            transition: .3s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--wire-on);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+
+        /* Block Diagram Circuits */
+        .circuit-diagram {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            padding: 10px 0;
+        }
+
+        .gate-block {
+            background: var(--gate-bg);
+            border: 2px solid var(--gate-border);
+            border-radius: 8px;
+            padding: 12px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .gate-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            font-weight: bold;
+        }
+
+        .gate-io {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .signals {
+            font-family: monospace;
+            font-size: 0.9rem;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .signal-line {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--wire-off);
+            display: inline-block;
+        }
+
+        .status-dot.active {
+            background-color: var(--wire-on);
+            box-shadow: 0 0 8px var(--wire-on);
+        }
+
+        /* Outputs Section */
+        .outputs-row {
+            margin-top: auto;
+            display: flex;
+            justify-content: space-around;
+            background: #1e293b;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #334155;
+        }
+
+        .output-bit {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .output-lamp {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #334155;
+            border: 2px solid #475569;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: all 0.2s ease;
+        }
+
+        .output-lamp.active-sum {
+            background: #10b981;
+            border-color: var(--accent-green);
+            box-shadow: 0 0 15px rgba(74, 222, 128, 0.6);
+            color: #000;
+        }
+
+        .output-lamp.active-carry {
+            background: #38bdf8;
+            border-color: #0ea5e9;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.6);
+            color: #000;
+        }
+
+        /* Truth Table Sidebar */
+        .table-panel {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .truth-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: monospace;
+            font-size: 0.85rem;
+            background: #0b0f19;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .truth-table th, .truth-table td {
+            padding: 8px 10px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .truth-table th {
+            background-color: #1e293b;
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        .truth-table th.out-col, .truth-table td.out-col {
+            background-color: rgba(56, 189, 248, 0.05);
+        }
+
+        .truth-table tr.active-row {
+            background-color: rgba(245, 158, 11, 0.15) !important;
+            color: var(--wire-on);
+            font-weight: bold;
+        }
+
+        .truth-table tr:nth-child(even):not(.active-row) {
+            background-color: #111827;
+        }
+
+        /* Equations section */
+        .equations {
+            margin-top: 16px;
+            padding: 12px;
+            background: #0b0f19;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        .eq-line {
+            margin: 4px 0;
+        }
+        .eq-highlight {
+            color: var(--accent-blue);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>1-Bit Full Adder Interactive Lab</h1>
+        <p>Toggle the input switches ($A$, $B$, and $C_{in}$) to watch the hardware logic calculate the Sum and Carry Out values in real-time.</p>
+    </header>
+
+    <div class="workspace">
+        <div class="interactive-panel">
+            <div class="inputs-row">
+                <div class="input-bit">
+                    <label for="switchA">Input A</label>
+                    <label class="switch">
+                        <input type="checkbox" id="switchA" onchange="updateCircuit()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="input-bit">
+                    <label for="switchB">Input B</label>
+                    <label class="switch">
+                        <input type="checkbox" id="switchB" onchange="updateCircuit()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="input-bit">
+                    <label for="switchCin">Carry In ($C_{in}$)</label>
+                    <label class="switch">
+                        <input type="checkbox" id="switchCin" onchange="updateCircuit()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="circuit-diagram">
+                <div class="gate-block">
+                    <div class="gate-title">Half Adder #1 (Combines A & B)</div>
+                    <div class="gate-io">
+                        <div class="signals">
+                            <div class="signal-line"><span id="dot-ha1-a" class="status-dot"></span> A</div>
+                            <div class="signal-line"><span id="dot-ha1-b" class="status-dot"></span> B</div>
+                        </div>
+                        <div class="signals" style="align-items: flex-end;">
+                            <div class="signal-line">Internal Sum ($S_1$) <span id="dot-ha1-sum" class="status-dot"></span></div>
+                            <div class="signal-line">Internal Carry ($C_1$) <span id="dot-ha1-carry" class="status-dot"></span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="gate-block">
+                    <div class="gate-title">Half Adder #2 (Combines $S_1$ & $C_{in}$)</div>
+                    <div class="gate-io">
+                        <div class="signals">
+                            <div class="signal-line"><span id="dot-ha2-s1" class="status-dot"></span> Internal Sum ($S_1$)</div>
+                            <div class="signal-line"><span id="dot-ha2-cin" class="status-dot"></span> Carry In ($C_{in}$)</div>
+                        </div>
+                        <div class="signals" style="align-items: flex-end;">
+                            <div class="signal-line">Final Sum ($S$) <span id="dot-ha2-sum" class="status-dot"></span></div>
+                            <div class="signal-line">Internal Carry ($C_2$) <span id="dot-ha2-carry" class="status-dot"></span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="gate-block" style="border-color: #0ea5e9; background: #0c4a6e;">
+                    <div class="gate-title" style="color: #e0f2fe;">Output Carry Logic (OR Gate)</div>
+                    <div class="gate-io">
+                        <div class="signals">
+                            <div class="signal-line"><span id="dot-or-c1" class="status-dot"></span> HA1 Carry ($C_1$)</div>
+                            <div class="signal-line"><span id="dot-or-c2" class="status-dot"></span> HA2 Carry ($C_2$)</div>
+                        </div>
+                        <div class="signals" style="align-items: flex-end;">
+                            <div class="signal-line">Carry Out ($C_{out}$) <span id="dot-or-cout" class="status-dot"></span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="outputs-row">
+                <div class="output-bit">
+                    <span class="gate-title">Carry Out ($C_{out}$)</span>
+                    <div id="lampCout" class="output-lamp">0</div>
+                </div>
+                <div class="output-bit">
+                    <span class="gate-title">Sum ($S$)</span>
+                    <div id="lampSum" class="output-lamp">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-panel">
+            <table class="truth-table" id="truthTable">
+                <thead>
+                    <tr>
+                        <th colspan="3">Inputs</th>
+                        <th colspan="2" class="out-col">Outputs</th>
+                    </tr>
+                    <tr>
+                        <th>A</th>
+                        <th>B</th>
+                        <th>Cin</th>
+                        <th class="out-col">Cout</th>
+                        <th class="out-col">Sum</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr id="row-000"><td>0</td><td>0</td><td>0</td><td class="out-col">0</td><td class="out-col">0</td></tr>
+                    <tr id="row-001"><td>0</td><td>0</td><td>1</td><td class="out-col">0</td><td class="out-col">1</td></tr>
+                    <tr id="row-010"><td>0</td><td>1</td><td>0</td><td class="out-col">0</td><td class="out-col">1</td></tr>
+                    <tr id="row-011"><td>0</td><td>1</td><td>1</td><td class="out-col">1</td><td class="out-col">0</td></tr>
+                    <tr id="row-100"><td>1</td><td>0</td><td>0</td><td class="out-col">0</td><td class="out-col">1</td></tr>
+                    <tr id="row-101"><td>1</td><td>0</td><td>1</td><td class="out-col">1</td><td class="out-col">0</td></tr>
+                    <tr id="row-110"><td>1</td><td>1</td><td>0</td><td class="out-col">1</td><td class="out-col">0</td></tr>
+                    <tr id="row-111"><td>1</td><td>1</td><td>1</td><td class="out-col">1</td><td class="out-col">1</td></tr>
+                </tbody>
+            </table>
+
+            <div class="equations">
+                <div class="gate-title" style="margin-bottom: 6px;">Boolean Expressions</div>
+                <div class="eq-line">Sum = <span class="eq-highlight">A ⊕ B ⊕ Cin</span></div>
+                <div class="eq-line">Cout = <span class="eq-highlight">(A · B) + (Cin · (A ⊕ B))</span></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function updateCircuit() {
+    // 1. Get raw input values
+    const valA = document.getElementById('switchA').checked ? 1 : 0;
+    const valB = document.getElementById('switchB').checked ? 1 : 0;
+    const valCin = document.getElementById('switchCin').checked ? 1 : 0;
+
+    // 2. Compute Intermediate Gate Outputs (Half Adder 1)
+    const ha1_sum = valA ^ valB; 
+    const ha1_carry = valA & valB;
+
+    // 3. Compute Second Block (Half Adder 2)
+    const ha2_sum = ha1_sum ^ valCin;
+    const ha2_carry = ha1_sum & valCin;
+
+    // 4. Combine Carries (OR Gate)
+    const final_cout = ha1_carry | ha2_carry;
+    const final_sum = ha2_sum;
+
+    // 5. Update Status Dots throughout layout diagram
+    updateDot('dot-ha1-a', valA);
+    updateDot('dot-ha1-b', valB);
+    updateDot('dot-ha1-sum', ha1_sum);
+    updateDot('dot-ha1-carry', ha1_carry);
+
+    updateDot('dot-ha2-s1', ha1_sum);
+    updateDot('dot-ha2-cin', valCin);
+    updateDot('dot-ha2-sum', final_sum);
+    updateDot('dot-ha2-carry', ha2_carry);
+
+    updateDot('dot-or-c1', ha1_carry);
+    updateDot('dot-or-c2', ha2_carry);
+    updateDot('dot-or-cout', final_cout);
+
+    // 6. Set Final Visual Display Lamps
+    const lampSum = document.getElementById('lampSum');
+    const lampCout = document.getElementById('lampCout');
+    
+    lampSum.textContent = final_sum;
+    if(final_sum) lampSum.classList.add('active-sum');
+    else lampSum.classList.remove('active-sum');
+
+    lampCout.textContent = final_cout;
+    if(final_cout) lampCout.classList.add('active-carry');
+    else lampCout.classList.remove('active-carry');
+
+    // 7. Highlight Matching Row in Truth Table
+    const rowId = `row-${valA}${valB}${valCin}`;
+    
+    // Clear old active row highlights
+    document.querySelectorAll('.truth-table tr').forEach(tr => {
+        tr.classList.remove('active-row');
+    });
+    // Set current active row
+    document.getElementById(rowId).classList.add('active-row');
+}
+
+function updateDot(id, state) {
+    const el = document.getElementById(id);
+    if(state) el.classList.add('active');
+    else el.classList.remove('active');
+}
+
+// Initial calculation loop run on boot window frame load
+updateCircuit();
+</script>
+
+</body>
+</html>
